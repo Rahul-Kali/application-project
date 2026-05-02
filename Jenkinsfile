@@ -10,7 +10,7 @@ pipeline {
         // 🔹 1. Clone
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/Rahul-Kali/7applications.git'
+                git branch: 'main', url: 'https://github.com/Rahul-Kali/application-project.git'
             }
         }
 
