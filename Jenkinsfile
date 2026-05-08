@@ -7,14 +7,14 @@ pipeline {
 
     stages {
 
-        // 🔹 1. Clone
+        // 🔹 1. Clone Repository
         stage('Clone Repository') {
             steps {
                 git branch: 'main', url: 'https://github.com/Rahul-Kali/application-project.git'
             }
         }
 
-        // 🔹 2. Build Backend
+        // 🔹 2. Build Spring Boot Services
         stage('Build Spring Boot Services') {
             steps {
                 sh '''
@@ -38,17 +38,17 @@ pipeline {
             }
         }
 
-        // 🔥 4. Setup KIND Cluster
-        stage('Setup KIND Cluster') {
+        // 🔥 4. Start Minikube
+        stage('Setup Minikube Cluster') {
             steps {
                 sh '''
-                echo "🔧 Setting up KIND cluster..."
+                echo "🔧 Starting Minikube..."
 
-                # Delete old cluster if exists
-                kind delete cluster || true
+                # Stop old cluster if running
+                minikube stop || true
 
-                # Create new cluster
-                kind create cluster --name dev-cluster
+                # Start Minikube
+                minikube start --driver=docker
 
                 echo "📌 Verifying cluster..."
                 kubectl cluster-info
@@ -57,42 +57,38 @@ pipeline {
             }
         }
 
-        // 🔥 5. Build Docker Images (LOCAL)
-        stage('Build Docker Images') {
+        // 🔥 5. Use Minikube Docker Environment
+        stage('Configure Docker for Minikube') {
             steps {
                 sh '''
-                echo "Building Docker images..."
+                echo "🐳 Configuring Docker environment for Minikube..."
 
-                docker build -t user-service ./user-service
-                docker build -t product-service ./product-service
-                docker build -t order-service ./order-service
+                eval $(minikube docker-env)
 
-                docker build -t payment-service ./payment-service
-                docker build -t notification-service ./notification-service
-                docker build -t analytics-service ./analytics-service
-
-                docker build -t frontend ./order-frontend
-
-                docker images
+                docker info
                 '''
             }
         }
 
-        // 🔥 6. Load Images into KIND
-        stage('Load Images to KIND') {
+        // 🔥 6. Build Docker Images INSIDE Minikube
+        stage('Build Docker Images') {
             steps {
                 sh '''
-                echo "Loading images into KIND..."
+                echo "🚀 Building Docker images inside Minikube..."
 
-                kind load docker-image user-service --name dev-cluster
-                kind load docker-image product-service --name dev-cluster
-                kind load docker-image order-service --name dev-cluster
+                eval $(minikube docker-env)
 
-                kind load docker-image payment-service --name dev-cluster
-                kind load docker-image notification-service --name dev-cluster
-                kind load docker-image analytics-service --name dev-cluster
+                docker build -t user-service:latest ./user-service
+                docker build -t product-service:latest ./product-service
+                docker build -t order-service:latest ./order-service
 
-                kind load docker-image frontend --name dev-cluster
+                docker build -t payment-service:latest ./payment-service
+                docker build -t notification-service:latest ./notification-service
+                docker build -t analytics-service:latest ./analytics-service
+
+                docker build -t frontend:latest ./order-frontend
+
+                docker images
                 '''
             }
         }
@@ -101,21 +97,21 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-                echo "Deploying to Kubernetes..."
+                echo "☸️ Deploying to Kubernetes..."
 
                 kubectl apply -f k8s/
 
                 echo "⏳ Waiting for pods..."
-                kubectl wait --for=condition=Ready pods --all --timeout=180s
+                kubectl wait --for=condition=Ready pods --all --timeout=300s
                 '''
             }
         }
 
-        // 🔹 8. Verify
+        // 🔹 8. Verify Deployment
         stage('Verify Deployment') {
             steps {
                 sh '''
-                echo "📊 Deployment status..."
+                echo "📊 Deployment Status"
 
                 kubectl get pods -o wide
                 kubectl get svc
@@ -126,10 +122,18 @@ pipeline {
 
     post {
         success {
-            echo '✅ CI/CD Pipeline Completed Successfully with KIND!'
+            echo '✅ CI/CD Pipeline Completed Successfully with Minikube!'
         }
+
         failure {
             echo '❌ Pipeline Failed. Check logs.'
+        }
+
+        always {
+            sh '''
+            echo "🧹 Cleaning up Docker Compose..."
+            docker-compose down || true
+            '''
         }
     }
 }
