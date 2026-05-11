@@ -8,6 +8,9 @@ RUN npm install
 
 COPY . .
 
+# Fix vite permission
+RUN chmod +x node_modules/.bin/vite
+
 RUN npm run build
 
 FROM nginx:alpine
