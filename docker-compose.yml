@@ -36,6 +36,6 @@ services:
       - "5003:5003"
 
   frontend:
-    build: ./order-frontend
+    build: ./frontendservice
     ports:
       - "3000:3000"
