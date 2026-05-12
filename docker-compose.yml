@@ -38,4 +38,4 @@ services:
   frontend:
     build: ./frontendservice
     ports:
-      - "8084:8084"
+      - "80:80"
