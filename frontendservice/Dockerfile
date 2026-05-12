@@ -19,4 +19,4 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 8084
 
-CMD ["nginx", "-g","npm","run","dev","--","--host","0.0.0.0","--port","8084","daemon off;"]
+CMD ["nginx", "-g","npm","dev","--","--host","0.0.0.0","--port","8084","daemon off;"]
