@@ -17,6 +17,6 @@ FROM nginx:alpine
 
 COPY --from=build /app/dist /usr/share/nginx/html
 
-EXPOSE 8084
+EXPOSE 80
 
 CMD ["nginx", "-g","npm","dev","--","--host","0.0.0.0","--port","8084","daemon off;"]
