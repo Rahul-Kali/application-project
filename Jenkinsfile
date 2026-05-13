@@ -51,7 +51,7 @@ pipeline {
 
         minikube start \
           --driver=docker \
-          --memory=4096 \
+          --memory=3072 \
           --cpus=2 \
           --kubernetes-version=v1.28.3 \
           --force
