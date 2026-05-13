@@ -7,14 +7,14 @@ pipeline {
 
     stages {
 
-        // 🔹 1. Clone Repository
+        // 🔹 1. Clone
         stage('Clone Repository') {
             steps {
                 git branch: 'main', url: 'https://github.com/Rahul-Kali/application-project.git'
             }
         }
 
-        // 🔹 2. Build Spring Boot Services
+        // 🔹 2. Build Backend
         stage('Build Spring Boot Services') {
             steps {
                 sh '''
@@ -39,81 +39,79 @@ pipeline {
         }
 
         // 🔥 4. Start Minikube
-        stage('Setup Minikube Cluster') {
+        stage('Start Minikube') {
+    steps {
+        sh '''
+        echo "🔧 Setting up Minikube..."
+
+        # Clean broken cluster if exists
+        minikube delete || true
+
+        echo "🚀 Starting Minikube..."
+
+        minikube start \
+          --driver=docker \
+          --memory=4096 \
+          --cpus=2 \
+          --kubernetes-version=v1.28.3 \
+          --force
+
+        echo "⏳ Waiting for Kubernetes API..."
+
+        # Wait until node is ready
+        kubectl wait --for=condition=Ready node/minikube --timeout=120s
+
+        echo "📌 Setting context..."
+        kubectl config use-context minikube
+
+        echo "📊 Cluster status:"
+        kubectl get nodes
+        kubectl get pods -A
+        '''
+    }
+}
+
+        // 🔥 5. Build Images INSIDE Minikube
+        stage('Build Images in Minikube') {
             steps {
                 sh '''
-                echo "🔧 Starting Minikube..."
-
-                # Stop old cluster if running
-                minikube stop || true
-
-                # Start Minikube
-                minikube start --driver=docker
-
-                echo "📌 Verifying cluster..."
-                kubectl cluster-info
-                kubectl get nodes
-                '''
-            }
-        }
-
-        // 🔥 5. Use Minikube Docker Environment
-        stage('Configure Docker for Minikube') {
-            steps {
-                sh '''
-                echo "🐳 Configuring Docker environment for Minikube..."
+                echo "Switching to Minikube Docker..."
 
                 eval $(minikube docker-env)
 
-                docker info
-                '''
-            }
-        }
+                docker build -t user-service ./user-service
+                docker build -t product-service ./product-service
+                docker build -t order-service ./order-service
 
-        // 🔥 6. Build Docker Images INSIDE Minikube
-        stage('Build Docker Images') {
-            steps {
-                sh '''
-                echo "🚀 Building Docker images inside Minikube..."
+                docker build -t payment-service ./payment-service
+                docker build -t notification-service ./notification-service
+                docker build -t analytics-service ./analytics-service
 
-                eval $(minikube docker-env)
-
-                docker build -t user-service:latest ./user-service
-                docker build -t product-service:latest ./product-service
-                docker build -t order-service:latest ./order-service
-
-                docker build -t payment-service:latest ./payment-service
-                docker build -t notification-service:latest ./notification-service
-                docker build -t analytics-service:latest ./analytics-service
-
-                docker build -t frontend:latest ./frontendservice
+                docker build -t frontend ./order-frontend
 
                 docker images
                 '''
             }
         }
 
-        // 🔹 7. Deploy to Kubernetes
+        // 🔹 6. Deploy to Kubernetes
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-                echo "☸️ Deploying to Kubernetes..."
+                echo "Deploying to Kubernetes..."
 
                 kubectl apply -f k8s/
 
-                echo "⏳ Waiting for pods..."
-                kubectl wait --for=condition=Ready pods --all --timeout=300s
+                sleep 15
                 '''
             }
         }
 
-        // 🔹 8. Verify Deployment
+        // 🔹 7. Verify
         stage('Verify Deployment') {
             steps {
                 sh '''
-                echo "📊 Deployment Status"
-
-                kubectl get pods -o wide
+                kubectl get pods
                 kubectl get svc
                 '''
             }
@@ -122,18 +120,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ CI/CD Pipeline Completed Successfully with Minikube!'
+            echo '✅ CI/CD Pipeline Completed Successfully!'
         }
-
         failure {
             echo '❌ Pipeline Failed. Check logs.'
-        }
-
-        always {
-            sh '''
-            echo "🧹 Cleaning up Docker Compose..."
-            docker-compose down || true
-            '''
         }
     }
 }

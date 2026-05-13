@@ -1,24 +1,24 @@
-version: '3'
 services:
-
   user-service:
     build: ./user-service
     ports:
-      - "8081:8080"
+      - "8081:8081"
 
   product-service:
     build: ./product-service
     ports:
-      - "8082:8080"
+      - "8082:8082"
 
   order-service:
     build: ./order-service
     ports:
-      - "8083:8080"
+      - "8083:8083"
     depends_on:
       - user-service
       - product-service
       - payment-service
+      - notification-service
+      - analytics-service
 
   payment-service:
     build: ./payment-service
@@ -36,6 +36,8 @@ services:
       - "5003:5003"
 
   frontend:
-    build: ./frontendservice
+    build: ./frontend
     ports:
-      - "3000:3000"
+      - "3000:80"
+    depends_on:
+      - order-service
