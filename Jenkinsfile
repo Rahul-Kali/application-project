@@ -87,7 +87,7 @@ pipeline {
                 docker build -t notification-service ./notification-service
                 docker build -t analytics-service ./analytics-service
 
-                docker build -t frontend ./order-frontend
+                docker build -t frontend ./frontend
 
                 docker images
                 '''
