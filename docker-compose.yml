@@ -1,4 +1,22 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: microservices-postgres
+    environment:
+      POSTGRES_DB: microservices_db
+      POSTGRES_USER: microservices_user
+      POSTGRES_PASSWORD: microservices_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U microservices_user -d microservices_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   user-service:
     build: ./user-service
     ports:
@@ -41,3 +59,6 @@ services:
       - "3000:80"
     depends_on:
       - order-service
+
+volumes:
+  postgres-data:

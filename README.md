@@ -9,8 +9,27 @@ This workspace contains 7 small applications for DevOps training:
 - `notification-service` - Flask service on port 5002
 - `analytics-service` - Flask service on port 5003
 - `order-frontend` - React app that calls the order service
+- `postgres` - PostgreSQL database on port 5432 with sample users, products, and orders
 
 ## Quick Start
+
+### Docker Compose
+
+Start the full stack, including PostgreSQL:
+
+```powershell
+docker-compose up --build
+```
+
+PostgreSQL is available with these local connection settings:
+
+- Host: `localhost`
+- Port: `5432`
+- Database: `microservices_db`
+- Username: `microservices_user`
+- Password: `microservices_password`
+
+The first startup initializes sample data from `postgres/init/01-init.sql`.
 
 ### Spring Boot services
 
