@@ -11,7 +11,7 @@ pipeline {
         // 🔹 1. Clone
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/Rahul-Kali/application-project.git'
+                git branch: 'pgsql', url: 'https://github.com/Rahul-Kali/application-project.git'
             }
         }
 
