@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_BUILDKIT = "1"
+        DOCKER_BUILDKIT = "0"
+        COMPOSE_DOCKER_CLI_BUILD = "0"
     }
 
     stages {
@@ -31,7 +32,24 @@ pipeline {
                 sh '''
                 docker-compose down || true
                 docker-compose up -d --build
-                sleep 20
+
+                echo "Waiting for frontend API route..."
+                for i in $(seq 1 30); do
+                  if curl -fsS -X POST http://localhost:3000/api/order; then
+                    echo "Frontend and microservices are connected."
+                    break
+                  fi
+
+                  if [ "$i" -eq 30 ]; then
+                    echo "Frontend API smoke test failed."
+                    docker-compose ps
+                    docker-compose logs --no-color frontend order-service user-service product-service payment-service notification-service analytics-service
+                    exit 1
+                  fi
+
+                  sleep 5
+                done
+
                 docker-compose ps
                 docker-compose down
                 '''
