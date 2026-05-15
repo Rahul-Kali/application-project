@@ -24,7 +24,7 @@ docker-compose up --build
 PostgreSQL is available with these local connection settings:
 
 - Host: `localhost`
-- Port: `5432`
+- Port: `5555`
 - Database: `microservices_db`
 - Username: `microservices_user`
 - Password: `microservices_password`
