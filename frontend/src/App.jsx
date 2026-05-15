@@ -3,6 +3,24 @@ import { useMemo, useState } from "react";
 const orderApiUrl = import.meta.env.VITE_ORDER_API_URL || "/api/order";
 const usersStorageKey = "microservices-demo-users";
 
+const demoUsers = [
+  {
+    name: "Aarav Mehta",
+    email: "aarav@example.com",
+    password: "Aarav@123"
+  },
+  {
+    name: "Maya Sharma",
+    email: "maya@example.com",
+    password: "Maya@123"
+  },
+  {
+    name: "Rohan Patel",
+    email: "rohan@example.com",
+    password: "Rohan@123"
+  }
+];
+
 const dbTables = [
   {
     name: "app_users",
@@ -23,9 +41,14 @@ const dbTables = [
 
 function getStoredUsers() {
   try {
-    return JSON.parse(localStorage.getItem(usersStorageKey)) || [];
+    const storedUsers = JSON.parse(localStorage.getItem(usersStorageKey)) || [];
+    const demoEmails = new Set(demoUsers.map((user) => user.email));
+    return [
+      ...demoUsers,
+      ...storedUsers.filter((user) => !demoEmails.has(user.email))
+    ];
   } catch {
-    return [];
+    return demoUsers;
   }
 }
 
