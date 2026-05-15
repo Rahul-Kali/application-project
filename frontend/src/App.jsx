@@ -17,7 +17,8 @@ export default function App() {
       });
 
       if (!response.ok) {
-        throw new Error("Order request failed");
+        const errorText = await response.text();
+        throw new Error(errorText || `Order request failed with HTTP ${response.status}`);
       }
 
       const data = await response.json();

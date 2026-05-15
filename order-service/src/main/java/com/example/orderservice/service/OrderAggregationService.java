@@ -64,7 +64,11 @@ public class OrderAggregationService {
         try {
             return restTemplate.getForObject(primaryUrl, String.class);
         } catch (RestClientException exception) {
-            return restTemplate.getForObject(fallbackUrl, String.class);
+            try {
+                return restTemplate.getForObject(fallbackUrl, String.class);
+            } catch (RestClientException fallbackException) {
+                return "Unavailable: " + fallbackException.getMessage();
+            }
         }
     }
 
@@ -73,7 +77,14 @@ public class OrderAggregationService {
         try {
             return restTemplate.postForObject(primaryUrl, HttpEntity.EMPTY, Map.class);
         } catch (RestClientException exception) {
-            return restTemplate.postForObject(fallbackUrl, HttpEntity.EMPTY, Map.class);
+            try {
+                return restTemplate.postForObject(fallbackUrl, HttpEntity.EMPTY, Map.class);
+            } catch (RestClientException fallbackException) {
+                Map<String, Object> errorResponse = new LinkedHashMap<>();
+                errorResponse.put("status", "Unavailable");
+                errorResponse.put("error", fallbackException.getMessage());
+                return errorResponse;
+            }
         }
     }
 }
