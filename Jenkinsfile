@@ -85,6 +85,13 @@ pipeline {
         echo "📊 Cluster status:"
         kubectl get nodes
         kubectl get pods -A
+
+        echo "Enabling Minikube ingress addon..."
+        minikube addons enable ingress
+        kubectl wait --namespace ingress-nginx \
+          --for=condition=ready pod \
+          --selector=app.kubernetes.io/component=controller \
+          --timeout=120s
         '''
     }
 }
@@ -131,6 +138,7 @@ pipeline {
                 sh '''
                 kubectl get pods
                 kubectl get svc
+                kubectl get ingress
                 '''
             }
         }
